@@ -4,8 +4,20 @@ const GRADE_OPTIONS = ['Pre-K', 'K', '1st', '2nd', '3rd', '4th', '5th', '6th', '
 const ORNAMENT_PRICE = 22;
 const PHOTO_PRICE = 5;
 const VENMO_HANDLE = 'SAAParents';
-// Paste the Web App URL you get from deploying the Apps Script here
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxCgVIjCikbiofvIjkrO_pgPVjxqZFqBeYYfUWSqFJdcUMcxkAxwpusGxTYzTMkvtI/exec';
+// Google Form submission endpoint - bypasses Apps Script deployment
+// permissions entirely, since Forms accept public submissions natively.
+const FORM_URL =
+  'https://docs.google.com/forms/u/0/d/e/1FAIpQLSfzcI6Fzqf783z7JrfaymSE72HGgLFBVqQm5jRoGukkt-D7lQ/formResponse';
+const FORM_ENTRIES = {
+  parentName: 'entry.1076604933',
+  studentName: 'entry.2043352946',
+  grade: 'entry.183521426',
+  teacher: 'entry.378218379',
+  ornaments: 'entry.685638574',
+  photos: 'entry.1945115209',
+  subtotal: 'entry.1094226619',
+  paymentMethod: 'entry.1767818373',
+};
 
 let nextId = 1;
 const makeStudent = () => ({
@@ -86,19 +98,33 @@ export default function FundraiserOrder() {
     setError('');
     setSaving(true);
 
-    // Fire-and-forget to the Apps Script web app. mode: 'no-cors' avoids CORS
-    // preflight issues but also means we can't read a real success/failure
-    // response back - if this URL isn't configured yet, this just silently
-    // no-ops and the order still completes for the parent.
+    // Submit one Form response per student. Forms accept public POSTs
+    // natively, so there's no deployment/permissions setting to fight -
+    // this sidesteps the Apps Script "who has access" restriction entirely.
+    // mode: 'no-cors' means we can't read a real success/failure response
+    // back, but the request itself will go through.
     try {
-      await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ customerName, paymentMethod, students }),
-      });
+      for (const s of students) {
+        const subtotal = s.ornaments * ORNAMENT_PRICE + s.photos * PHOTO_PRICE;
+        const body = new URLSearchParams({
+          [FORM_ENTRIES.parentName]: customerName,
+          [FORM_ENTRIES.studentName]: s.name,
+          [FORM_ENTRIES.grade]: s.grade,
+          [FORM_ENTRIES.teacher]: s.teacher,
+          [FORM_ENTRIES.ornaments]: String(s.ornaments),
+          [FORM_ENTRIES.photos]: String(s.photos),
+          [FORM_ENTRIES.subtotal]: String(subtotal),
+          [FORM_ENTRIES.paymentMethod]: paymentMethod,
+        });
+        await fetch(FORM_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body,
+        });
+      }
     } catch (err) {
-      // Network error reaching the sheet - don't block the parent's order
+      // Network error reaching the form - don't block the parent's order
     }
 
     setSaving(false);
