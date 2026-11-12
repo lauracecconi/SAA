@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 
+// ---------- Settings ----------
 const GRADE_OPTIONS = ['Pre-K', 'K', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'];
 const ORNAMENT_PRICE = 22;
 const PHOTO_PRICE = 5;
 const VENMO_HANDLE = 'SAAParents';
-// Google Form submission endpoint - bypasses Apps Script deployment
-// permissions entirely, since Forms accept public submissions natively.
+const ORNAMENT_IMAGE = '/ornament.jpg'; // lives in the /public folder
+
+// Google Form submission endpoint (unchanged from your live setup)
 const FORM_URL =
   'https://docs.google.com/forms/u/0/d/e/1FAIpQLSfzcI6Fzqf783z7JrfaymSE72HGgLFBVqQm5jRoGukkt-D7lQ/formResponse';
 const FORM_ENTRIES = {
@@ -19,49 +21,78 @@ const FORM_ENTRIES = {
   paymentMethod: 'entry.1767818373',
 };
 
-let nextId = 1;
-const makeStudent = () => ({
-  id: nextId++,
-  name: '',
-  grade: '',
-  teacher: '',
-  ornaments: 0,
-  photos: 0,
-});
+// SAA palette, pulled from the ornament itself
+const NAVY = '#1F2A7A';
+const LIME = '#8DC63F';
+const RED = '#D22F2F';
 
-export default function FundraiserOrder() {
+let nextId = 1;
+const makeStudent = () => ({ id: nextId++, name: '', grade: '', teacher: '', ornaments: 0, photos: 0 });
+
+const Paw = ({ className = '', style }) => (
+  <svg viewBox="0 0 64 64" className={className} style={style} aria-hidden="true">
+    <ellipse cx="32" cy="42" rx="14" ry="11" fill="currentColor" />
+    <ellipse cx="16" cy="26" rx="6" ry="7.5" fill="currentColor" />
+    <ellipse cx="26" cy="16" rx="6" ry="7.5" fill="currentColor" />
+    <ellipse cx="38" cy="16" rx="6" ry="7.5" fill="currentColor" />
+    <ellipse cx="48" cy="26" rx="6" ry="7.5" fill="currentColor" />
+  </svg>
+);
+
+function Stepper({ value, onMinus, onPlus, label }) {
+  return (
+    <div className="flex items-center rounded-full border-2 bg-white" style={{ borderColor: NAVY }}>
+      <button
+        type="button"
+        onClick={onMinus}
+        aria-label={`Fewer ${label}`}
+        className="w-10 h-10 text-xl font-bold rounded-full disabled:opacity-30"
+        style={{ color: NAVY }}
+        disabled={value === 0}
+      >
+        −
+      </button>
+      <span className="w-8 text-center font-bold text-lg tabular-nums" style={{ color: NAVY }}>
+        {value}
+      </span>
+      <button
+        type="button"
+        onClick={onPlus}
+        aria-label={`More ${label}`}
+        className="w-10 h-10 text-xl font-bold rounded-full text-white"
+        style={{ background: NAVY }}
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
+export default function App() {
   const [customerName, setCustomerName] = useState('');
-  const [students, setStudents] = useState([makeStudent()]);
+  const [students, setStudents] = useState(() => [makeStudent()]);
   const [paymentMethod, setPaymentMethod] = useState('venmo');
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [zoom, setZoom] = useState(false);
 
-  const updateStudent = (id, field, value) => {
+  const updateStudent = (id, field, value) =>
+    setStudents((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
+
+  const adjustCount = (id, field, delta) =>
     setStudents((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
+      prev.map((s) => (s.id === id ? { ...s, [field]: Math.max(0, s[field] + delta) } : s))
     );
-  };
 
-  const adjustCount = (id, field, delta) => {
-    setStudents((prev) =>
-      prev.map((s) =>
-        s.id === id ? { ...s, [field]: Math.max(0, s[field] + delta) } : s
-      )
-    );
-  };
-
-  const addStudent = () => {
-    setStudents((prev) => [...prev, makeStudent()]);
-  };
-
-  const removeStudent = (id) => {
+  const addStudent = () => setStudents((prev) => [...prev, makeStudent()]);
+  const removeStudent = (id) =>
     setStudents((prev) => (prev.length > 1 ? prev.filter((s) => s.id !== id) : prev));
-  };
 
   const studentTotal = (s) => s.ornaments * ORNAMENT_PRICE + s.photos * PHOTO_PRICE;
   const total = students.reduce((sum, s) => sum + studentTotal(s), 0);
+  const itemCount = students.reduce((n, s) => n + s.ornaments + s.photos, 0);
 
   const note = `Holiday Fundraiser - ${students
     .map((s) => {
@@ -73,39 +104,31 @@ export default function FundraiserOrder() {
     })
     .join('; ')}`;
 
-  // Single universal link: works on desktop and mobile browsers alike.
-  // If the Venmo app is installed on mobile, the OS hands this off to it automatically.
-  // If not, it falls back gracefully to the Venmo web checkout - no dead ends.
-  const venmoLink = `https://venmo.com/${VENMO_HANDLE}?txn=pay&amount=${total}&note=${encodeURIComponent(
-    note
-  )}`;
+  // One universal link: opens the Venmo app on phones, Venmo web on desktop.
+  const venmoLink = `https://venmo.com/${VENMO_HANDLE}?txn=pay&amount=${total}&note=${encodeURIComponent(note)}`;
 
   const handleSubmit = async () => {
     if (!customerName) {
-      setError('Please enter Parent/Guardian name');
+      setError('Please enter the parent/guardian name.');
       return;
     }
     for (const s of students) {
       if (!s.name || !s.grade || !s.teacher) {
-        setError('Please fill in name, grade, and homeroom teacher for every student');
+        setError('Please fill in name, grade, and homeroom teacher for every student.');
         return;
       }
     }
     if (total === 0) {
-      setError('Please select at least one ornament or photo');
+      setError('Please add at least one ornament or photo.');
       return;
     }
     setError('');
     setSaving(true);
 
-    // Submit one Form response per student. Forms accept public POSTs
-    // natively, so there's no deployment/permissions setting to fight -
-    // this sidesteps the Apps Script "who has access" restriction entirely.
-    // mode: 'no-cors' means we can't read a real success/failure response
-    // back, but the request itself will go through.
+    // One Form response per student; no-cors means we can't read the reply,
+    // but the submission goes through and never blocks the parent's order.
     try {
       for (const s of students) {
-        const subtotal = s.ornaments * ORNAMENT_PRICE + s.photos * PHOTO_PRICE;
         const body = new URLSearchParams({
           [FORM_ENTRIES.parentName]: customerName,
           [FORM_ENTRIES.studentName]: s.name,
@@ -113,7 +136,7 @@ export default function FundraiserOrder() {
           [FORM_ENTRIES.teacher]: s.teacher,
           [FORM_ENTRIES.ornaments]: String(s.ornaments),
           [FORM_ENTRIES.photos]: String(s.photos),
-          [FORM_ENTRIES.subtotal]: String(subtotal),
+          [FORM_ENTRIES.subtotal]: String(studentTotal(s)),
           [FORM_ENTRIES.paymentMethod]: paymentMethod,
         });
         await fetch(FORM_URL, {
@@ -124,11 +147,12 @@ export default function FundraiserOrder() {
         });
       }
     } catch (err) {
-      // Network error reaching the form - don't block the parent's order
+      // Don't block the parent's order on a network hiccup
     }
 
     setSaving(false);
     setSubmitted(true);
+    window.scrollTo(0, 0);
   };
 
   const handleReset = () => {
@@ -146,279 +170,336 @@ export default function FundraiserOrder() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      // Clipboard API unavailable - silently ignore, link is still the primary path
+      // Clipboard unavailable; the Venmo button is still the main path
     }
   };
 
+  const inputClass =
+    'w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base focus:outline-none focus:border-[#1F2A7A]';
+
+  const Styles = () => (
+    <style>{`
+      .saa-body { font-family: 'Nunito', system-ui, sans-serif; }
+      .saa-display { font-family: 'DM Serif Display', Georgia, serif; }
+      .saa-stripe { background: repeating-linear-gradient(135deg, ${RED} 0 14px, #fff 14px 28px); }
+    `}</style>
+  );
+
+  const Header = () => (
+    <header className="relative overflow-hidden text-white" style={{ background: NAVY }}>
+      <Paw className="absolute -right-6 -top-4 w-40 h-40 opacity-10 rotate-12" />
+      <Paw className="absolute left-4 bottom-2 w-16 h-16 opacity-10 -rotate-12" />
+      <div className="relative max-w-2xl mx-auto px-5 pt-8 pb-10 text-center">
+        <div
+          className="inline-flex items-center gap-2 rounded-full px-4 py-1 text-sm font-extrabold tracking-widest"
+          style={{ background: LIME, color: NAVY }}
+        >
+          <Paw className="w-4 h-4" /> SAA
+        </div>
+        <h1 className="saa-display text-4xl sm:text-5xl mt-4 leading-tight">Holiday Fundraiser</h1>
+        <p className="mt-2 text-white/85 text-lg">Ornaments &amp; Photos with Santa</p>
+      </div>
+      <div className="saa-stripe h-3" />
+    </header>
+  );
+
+  // ---------- Confirmation ----------
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-green-50 p-8">
-        <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
-          <div className="text-center">
-            <div className="text-6xl mb-4">🎄</div>
-            <h2 className="text-3xl font-bold text-green-700 mb-4">Order Confirmed!</h2>
-
-            <div className="bg-gray-50 rounded-lg p-6 mb-6 text-left">
-              <h3 className="font-semibold text-lg mb-3">Order Summary:</h3>
-              <p className="mb-3"><strong>Parent Name:</strong> {customerName}</p>
-              {students.map((s) => (
-                <div key={s.id} className="mb-3 pb-3 border-b last:border-b-0">
-                  <p className="font-semibold">
-                    {s.name} — {s.grade} — {s.teacher}
-                  </p>
-                  {s.ornaments > 0 && (
-                    <p className="text-sm text-gray-700">
-                      Ornaments: {s.ornaments} × ${ORNAMENT_PRICE} = ${s.ornaments * ORNAMENT_PRICE}
-                    </p>
-                  )}
-                  {s.photos > 0 && (
-                    <p className="text-sm text-gray-700">
-                      Photos with Santa: {s.photos} × ${PHOTO_PRICE} = ${s.photos * PHOTO_PRICE}
-                    </p>
-                  )}
-                </div>
-              ))}
-              <p className="text-xl font-bold mt-4 pt-4 border-t">
-                <strong>Total:</strong> ${total}
-              </p>
-            </div>
-
-            {paymentMethod === 'venmo' ? (
-              <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-6 mb-6">
-                <h3 className="font-semibold text-lg mb-3">Payment Instructions:</h3>
-                <p className="mb-3">
-                  Please send <strong>${total}</strong> via Venmo to:
-                </p>
-                <a
-                  href={venmoLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition mb-3"
-                >
-                  Pay @{VENMO_HANDLE} on Venmo
-                </a>
-                <p className="text-sm text-gray-600 mb-3">
-                  This opens the Venmo app if you have it installed, or the Venmo site if you don't.
-                  The amount and note are already filled in - just review and confirm.
-                </p>
-                <button
-                  onClick={handleCopy}
-                  className="text-sm text-blue-700 underline hover:text-blue-900"
-                >
-                  {copied ? 'Copied!' : 'Copy amount + note instead'}
-                </button>
-              </div>
-            ) : (
-              <div className="bg-green-50 border-2 border-green-300 rounded-lg p-6 mb-6">
-                <h3 className="font-semibold text-lg mb-3">Cash Payment:</h3>
-                <p>Please bring <strong>${total}</strong> in cash to the school office.</p>
-              </div>
-            )}
-
-            <button
-              onClick={handleReset}
-              className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition"
+      <div className="saa-body min-h-screen bg-[#FBF8F1] text-slate-800">
+        <Styles />
+        <Header />
+        <main className="max-w-2xl mx-auto px-4 py-8">
+          <div className="text-center mb-6">
+            <div
+              className="mx-auto w-16 h-16 rounded-full flex items-center justify-center text-white"
+              style={{ background: LIME }}
             >
-              Place Another Order
-            </button>
+              <Paw className="w-9 h-9" style={{ color: NAVY }} />
+            </div>
+            <h2 className="saa-display text-3xl mt-4" style={{ color: NAVY }}>
+              Thank you, {customerName.split(' ')[0]}!
+            </h2>
+            <p className="text-slate-600 mt-1">Your order is in. Here's your summary.</p>
           </div>
-        </div>
+
+          <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-5">
+            {students.map((s) => (
+              <div key={s.id} className="py-3 border-b border-slate-100 last:border-b-0">
+                <p className="font-bold" style={{ color: NAVY }}>
+                  {s.name} · {s.grade} · {s.teacher}
+                </p>
+                {s.ornaments > 0 && (
+                  <p className="text-sm text-slate-600">
+                    Ornaments: {s.ornaments} × ${ORNAMENT_PRICE} = ${s.ornaments * ORNAMENT_PRICE}
+                  </p>
+                )}
+                {s.photos > 0 && (
+                  <p className="text-sm text-slate-600">
+                    Photos with Santa: {s.photos} × ${PHOTO_PRICE} = ${s.photos * PHOTO_PRICE}
+                  </p>
+                )}
+              </div>
+            ))}
+            <div className="flex justify-between items-baseline pt-4 mt-1 border-t-2" style={{ borderColor: NAVY }}>
+              <span className="font-bold">Total</span>
+              <span className="saa-display text-3xl" style={{ color: NAVY }}>${total}</span>
+            </div>
+          </section>
+
+          {paymentMethod === 'venmo' ? (
+            <section className="rounded-2xl p-5 mb-5 text-white" style={{ background: NAVY }}>
+              <h3 className="font-extrabold text-lg">Finish with Venmo</h3>
+              <p className="text-white/85 mt-1 mb-4">
+                Send <strong>${total}</strong> to @{VENMO_HANDLE}. The amount and note are filled in for you.
+              </p>
+              <a
+                href={venmoLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-center rounded-xl py-4 font-extrabold text-lg"
+                style={{ background: LIME, color: NAVY }}
+              >
+                Pay ${total} on Venmo
+              </a>
+              <button type="button" onClick={handleCopy} className="w-full mt-3 text-sm underline text-white/80">
+                {copied ? 'Copied!' : 'Copy amount + note instead'}
+              </button>
+            </section>
+          ) : (
+            <section className="rounded-2xl p-5 mb-5 border-2" style={{ borderColor: LIME, background: '#F3F9E8' }}>
+              <h3 className="font-extrabold text-lg" style={{ color: NAVY }}>Paying with cash</h3>
+              <p className="mt-1">
+                Please bring <strong>${total}</strong> in cash to the school office.
+              </p>
+              <p className="text-sm text-slate-600 mt-1">Reference: {students.map((s) => s.name).join(', ')}</p>
+            </section>
+          )}
+
+          <button
+            type="button"
+            onClick={handleReset}
+            className="w-full rounded-xl py-3 font-bold border-2 bg-white"
+            style={{ borderColor: NAVY, color: NAVY }}
+          >
+            Place another order
+          </button>
+        </main>
       </div>
     );
   }
 
+  // ---------- Order form ----------
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-green-50 p-8">
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-green-700 mb-2">🎄 Holiday Fundraiser 🎄</h1>
-          <p className="text-gray-600">Support our school with ornaments and Photos with Santa!</p>
-        </div>
+    <div className="saa-body min-h-screen bg-[#FBF8F1] text-slate-800 pb-28">
+      <Styles />
+      <Header />
 
-        <div>
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Parent/Guardian Name
-            </label>
-            <input
-              type="text"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Your name"
-            />
+      <main className="max-w-2xl mx-auto px-4">
+        {/* Ornament showcase */}
+        <section className="-mt-6 relative bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden sm:flex">
+          <button
+            type="button"
+            onClick={() => setZoom(true)}
+            className="sm:w-1/2 bg-white block"
+            aria-label="See the ornament up close"
+          >
+            <img src={ORNAMENT_IMAGE} alt="SAA holiday ornament" className="w-full h-64 sm:h-full object-contain p-2" />
+          </button>
+          <div className="sm:w-1/2 p-5 flex flex-col justify-center border-t sm:border-t-0 sm:border-l border-slate-100">
+            <p className="text-xs font-extrabold tracking-widest" style={{ color: RED }}>THIS YEAR'S ORNAMENT</p>
+            <h2 className="saa-display text-2xl mt-1" style={{ color: NAVY }}>Hand-painted SAA keepsake</h2>
+            <p className="text-slate-600 mt-2">
+              A ceramic ornament made just for our school, ready to hang on the tree.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="rounded-full px-3 py-1 text-sm font-bold text-white" style={{ background: NAVY }}>
+                Ornament ${ORNAMENT_PRICE}
+              </span>
+              <span className="rounded-full px-3 py-1 text-sm font-bold" style={{ background: LIME, color: NAVY }}>
+                Photo with Santa ${PHOTO_PRICE}
+              </span>
+            </div>
           </div>
+        </section>
 
-          <div className="space-y-6 mb-6">
-            {students.map((s, index) => (
-              <div key={s.id} className="border-2 border-green-100 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="font-semibold text-green-700">Student {index + 1}</p>
+        {/* Parent */}
+        <section className="mt-8">
+          <h3 className="saa-display text-2xl mb-3" style={{ color: NAVY }}>1. Your name</h3>
+          <input
+            type="text"
+            placeholder="Parent / guardian name"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            className={inputClass}
+          />
+        </section>
+
+        {/* Students */}
+        <section className="mt-8">
+          <h3 className="saa-display text-2xl mb-3" style={{ color: NAVY }}>2. Your students &amp; items</h3>
+          <div className="space-y-4">
+            {students.map((s, i) => (
+              <div key={s.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2" style={{ background: '#EEF0FA' }}>
+                  <span className="font-extrabold flex items-center gap-2" style={{ color: NAVY }}>
+                    <Paw className="w-4 h-4" /> Student {i + 1}
+                  </span>
                   {students.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeStudent(s.id)}
-                      className="text-sm text-red-600 hover:text-red-800"
+                      className="text-sm font-bold"
+                      style={{ color: RED }}
                     >
                       Remove
                     </button>
                   )}
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">
-                      Student Name
-                    </label>
-                    <input
-                      type="text"
-                      value={s.name}
-                      onChange={(e) => updateStudent(s.id, 'name', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="Student's name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">
-                      Grade
-                    </label>
+                <div className="p-4 space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Student name"
+                    value={s.name}
+                    onChange={(e) => updateStudent(s.id, 'name', e.target.value)}
+                    className={inputClass}
+                  />
+                  <div className="grid grid-cols-2 gap-3">
                     <select
                       value={s.grade}
                       onChange={(e) => updateStudent(s.id, 'grade', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className={inputClass}
                     >
-                      <option value="">Select</option>
+                      <option value="">Grade</option>
                       {GRADE_OPTIONS.map((g) => (
-                        <option key={g} value={g}>
-                          {g}
-                        </option>
+                        <option key={g} value={g}>{g}</option>
                       ))}
                     </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">
-                      Homeroom Teacher
-                    </label>
                     <input
                       type="text"
+                      placeholder="Homeroom teacher"
                       value={s.teacher}
                       onChange={(e) => updateStudent(s.id, 'teacher', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="Teacher's name"
+                      className={inputClass}
                     />
                   </div>
-                </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between border border-gray-200 rounded-lg p-3">
-                    <div>
-                      <p className="font-semibold text-gray-800 text-sm">Ornament</p>
-                      <p className="text-xs text-gray-500">${ORNAMENT_PRICE} each</p>
-                    </div>
+                  <div className="flex items-center justify-between pt-2">
                     <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => adjustCount(s.id, 'ornaments', -1)}
-                        className="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 font-bold"
-                      >
-                        −
-                      </button>
-                      <span className="w-6 text-center font-semibold">{s.ornaments}</span>
-                      <button
-                        type="button"
-                        onClick={() => adjustCount(s.id, 'ornaments', 1)}
-                        className="w-7 h-7 rounded-full bg-green-600 text-white hover:bg-green-700 font-bold"
-                      >
-                        +
-                      </button>
+                      <img src={ORNAMENT_IMAGE} alt="" className="w-11 h-11 rounded-full border border-slate-200 object-cover" />
+                      <div>
+                        <p className="font-bold">Ornaments</p>
+                        <p className="text-sm text-slate-500">${ORNAMENT_PRICE} each</p>
+                      </div>
                     </div>
+                    <Stepper
+                      label="ornaments"
+                      value={s.ornaments}
+                      onMinus={() => adjustCount(s.id, 'ornaments', -1)}
+                      onPlus={() => adjustCount(s.id, 'ornaments', 1)}
+                    />
                   </div>
-
-                  <div className="flex items-center justify-between border border-gray-200 rounded-lg p-3">
-                    <div>
-                      <p className="font-semibold text-gray-800 text-sm">Photo with Santa</p>
-                      <p className="text-xs text-gray-500">${PHOTO_PRICE} each</p>
-                    </div>
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => adjustCount(s.id, 'photos', -1)}
-                        className="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 font-bold"
-                      >
-                        −
-                      </button>
-                      <span className="w-6 text-center font-semibold">{s.photos}</span>
-                      <button
-                        type="button"
-                        onClick={() => adjustCount(s.id, 'photos', 1)}
-                        className="w-7 h-7 rounded-full bg-red-600 text-white hover:bg-red-700 font-bold"
-                      >
-                        +
-                      </button>
+                      <div className="w-11 h-11 rounded-full flex items-center justify-center text-xl" style={{ background: '#FDECEC' }}>
+                        📸
+                      </div>
+                      <div>
+                        <p className="font-bold">Photos with Santa</p>
+                        <p className="text-sm text-slate-500">${PHOTO_PRICE} each</p>
+                      </div>
                     </div>
+                    <Stepper
+                      label="photos"
+                      value={s.photos}
+                      onMinus={() => adjustCount(s.id, 'photos', -1)}
+                      onPlus={() => adjustCount(s.id, 'photos', 1)}
+                    />
                   </div>
+                  {studentTotal(s) > 0 && (
+                    <p className="text-right text-sm font-bold" style={{ color: NAVY }}>
+                      Subtotal ${studentTotal(s)}
+                    </p>
+                  )}
                 </div>
-
-                {studentTotal(s) > 0 && (
-                  <p className="text-right text-sm font-semibold text-green-700 mt-2">
-                    Subtotal: ${studentTotal(s)}
-                  </p>
-                )}
               </div>
             ))}
           </div>
-
           <button
             type="button"
             onClick={addStudent}
-            className="w-full mb-6 border-2 border-dashed border-green-400 text-green-700 py-2 rounded-lg font-semibold hover:bg-green-50 transition"
+            className="mt-4 w-full rounded-2xl border-2 border-dashed py-3 font-bold"
+            style={{ borderColor: NAVY, color: NAVY }}
           >
-            + Add Another Student
+            + Add another student
           </button>
+        </section>
 
-          <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4 mb-6">
-            <span className="font-semibold text-gray-700">Total</span>
-            <span className="text-2xl font-bold text-green-700">${total}</span>
+        {/* Payment */}
+        <section className="mt-8">
+          <h3 className="saa-display text-2xl mb-3" style={{ color: NAVY }}>3. How you'll pay</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { key: 'venmo', title: 'Venmo', sub: `@${VENMO_HANDLE}` },
+              { key: 'cash', title: 'Cash', sub: 'School office' },
+            ].map((opt) => {
+              const on = paymentMethod === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setPaymentMethod(opt.key)}
+                  className="rounded-2xl border-2 p-4 text-left transition"
+                  style={{
+                    borderColor: on ? NAVY : '#E2E8F0',
+                    background: on ? NAVY : '#fff',
+                    color: on ? '#fff' : NAVY,
+                  }}
+                  aria-pressed={on}
+                >
+                  <p className="font-extrabold text-lg">{opt.title}</p>
+                  <p className={`text-sm ${on ? 'text-white/80' : 'text-slate-500'}`}>{opt.sub}</p>
+                </button>
+              );
+            })}
           </div>
+        </section>
 
-          <div className="mb-6">
-            <p className="text-sm font-semibold text-gray-700 mb-2">Payment Method</p>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentMethod === 'venmo'}
-                  onChange={() => setPaymentMethod('venmo')}
-                />
-                Venmo
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentMethod === 'cash'}
-                  onChange={() => setPaymentMethod('cash')}
-                />
-                Cash
-              </label>
-            </div>
+        {error && (
+          <p className="mt-6 rounded-xl px-4 py-3 font-semibold" style={{ background: '#FDECEC', color: RED }}>
+            {error}
+          </p>
+        )}
+      </main>
+
+      {/* Sticky total + submit */}
+      <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-slate-200 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-4">
+          <div className="shrink-0">
+            <p className="text-xs text-slate-500">{itemCount} item{itemCount === 1 ? '' : 's'}</p>
+            <p className="saa-display text-2xl leading-none" style={{ color: NAVY }}>${total}</p>
           </div>
-
-          {error && (
-            <p className="text-red-600 text-sm font-semibold mb-3 text-center">{error}</p>
-          )}
-
           <button
             type="button"
             onClick={handleSubmit}
             disabled={saving}
-            className="w-full bg-green-700 text-white py-3 rounded-lg font-semibold hover:bg-green-800 transition disabled:opacity-60"
+            className="flex-1 rounded-xl py-3 font-extrabold text-white disabled:opacity-60"
+            style={{ background: RED }}
           >
-            {saving ? 'Placing Order...' : 'Place Order'}
+            {saving ? 'Placing order…' : 'Place order'}
           </button>
         </div>
       </div>
+
+      {/* Photo zoom */}
+      {zoom && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+          onClick={() => setZoom(false)}
+        >
+          <img src={ORNAMENT_IMAGE} alt="SAA holiday ornament" className="max-h-full max-w-full rounded-2xl bg-white" />
+        </div>
+      )}
     </div>
   );
 }
