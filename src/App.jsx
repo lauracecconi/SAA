@@ -108,12 +108,12 @@ export default function App() {
   const venmoLink = `https://venmo.com/${VENMO_HANDLE}?txn=pay&amount=${total}&note=${encodeURIComponent(note)}`;
 
   const handleSubmit = async () => {
-    if (!customerName) {
+    if (!customerName.trim()) {
       setError('Please enter the parent/guardian name.');
       return;
     }
     for (const s of students) {
-      if (!s.name || !s.grade || !s.teacher) {
+      if (!s.name.trim() || !s.grade || !s.teacher.trim()) {
         setError('Please fill in name, grade, and homeroom teacher for every student.');
         return;
       }
@@ -122,6 +122,17 @@ export default function App() {
       setError('Please add at least one ornament or photo.');
       return;
     }
+    const empty = students.find((s) => s.ornaments + s.photos === 0);
+    if (empty) {
+      setError(`${empty.name.trim()} has no items yet. Add an ornament or photo, or remove that student.`);
+      return;
+    }
+    // Tidy stray spaces before anything is saved
+    setCustomerName(customerName.trim());
+    students.forEach((s) => {
+      s.name = s.name.trim();
+      s.teacher = s.teacher.trim();
+    });
     setError('');
     setSaving(true);
 
