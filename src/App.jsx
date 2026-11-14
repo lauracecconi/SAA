@@ -1,8 +1,28 @@
 import React, { useState } from 'react';
 
 // ---------- Settings ----------
-const GRADE_OPTIONS = ['Pre-K', 'K', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'];
-const ORNAMENT_PRICE = 22;
+// Homerooms and their teachers (from the 2026 student list).
+// Picking a homeroom fills in the teacher, but parents can still type any name.
+const TEACHERS_BY_GRADE = {
+  M1: 'Sister Amedeo',
+  M2: 'Ms. Ani',
+  K: 'Mrs. Lawley',
+  '1B': 'Mrs. Kurhan',
+  '2A': 'Mrs. Snyder',
+  '3A': 'Mrs. McManus',
+  '4A': 'Mrs. Wagenborg',
+  '5A': 'Ms. Pickard',
+  '5B': 'Mrs. Richard',
+  '6A': "Mrs. O'Connell",
+  '6B': 'Mrs. McNeill',
+  '7A': 'Mr. Hoffman',
+  '7B': 'Mr. Jeffries',
+  '8A': 'Ms. Goode',
+  '8B': 'Ms. Taylor',
+};
+const GRADE_OPTIONS = Object.keys(TEACHERS_BY_GRADE);
+const ALL_TEACHERS = Object.values(TEACHERS_BY_GRADE);
+const ORNAMENT_PRICE = 25;
 const PHOTO_PRICE = 5;
 const VENMO_HANDLE = 'SAAParents';
 const ORNAMENT_IMAGE = '/ornament.jpg'; // lives in the /public folder
@@ -19,6 +39,7 @@ const FORM_ENTRIES = {
   photos: 'entry.1945115209',
   subtotal: 'entry.1094226619',
   paymentMethod: 'entry.1767818373',
+  personalization: 'entry.1833685702',
 };
 
 // SAA palette, pulled from the ornament itself
@@ -27,7 +48,7 @@ const LIME = '#8DC63F';
 const RED = '#D22F2F';
 
 let nextId = 1;
-const makeStudent = () => ({ id: nextId++, name: '', grade: '', teacher: '', ornaments: 0, photos: 0 });
+const makeStudent = () => ({ id: nextId++, name: '', grade: '', teacher: '', ornaments: 0, photos: 0, personalizations: [] });
 
 const Paw = ({ className = '', style }) => (
   <svg viewBox="0 0 64 64" className={className} style={style} aria-hidden="true">
@@ -83,7 +104,34 @@ export default function App() {
 
   const adjustCount = (id, field, delta) =>
     setStudents((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, [field]: Math.max(0, s[field] + delta) } : s))
+      prev.map((s) => {
+        if (s.id !== id) return s;
+        const count = Math.max(0, s[field] + delta);
+        const next = { ...s, [field]: count };
+        if (field === 'ornaments') {
+          next.personalizations = Array.from({ length: count }, (_, i) => s.personalizations[i] || '');
+        }
+        return next;
+      })
+    );
+
+  const updatePersonalization = (id, index, value) =>
+    setStudents((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? { ...s, personalizations: s.personalizations.map((p, i) => (i === index ? value : p)) }
+          : s
+      )
+    );
+
+  // Picking a homeroom fills in its teacher, unless the parent typed their own name
+  const pickGrade = (id, grade) =>
+    setStudents((prev) =>
+      prev.map((s) => {
+        if (s.id !== id) return s;
+        const typedOwn = s.teacher.trim() && !ALL_TEACHERS.includes(s.teacher.trim());
+        return { ...s, grade, teacher: typedOwn ? s.teacher : TEACHERS_BY_GRADE[grade] || '' };
+      })
     );
 
   const addStudent = () => setStudents((prev) => [...prev, makeStudent()]);
@@ -149,6 +197,9 @@ export default function App() {
           [FORM_ENTRIES.photos]: String(s.photos),
           [FORM_ENTRIES.subtotal]: String(studentTotal(s)),
           [FORM_ENTRIES.paymentMethod]: paymentMethod,
+          [FORM_ENTRIES.personalization]: s.personalizations
+            .map((p, i) => `#${i + 1}: ${p.trim() || '(none)'}`)
+            .join(' | '),
         });
         await fetch(FORM_URL, {
           method: 'POST',
@@ -245,6 +296,11 @@ export default function App() {
                     Ornaments: {s.ornaments} × ${ORNAMENT_PRICE} = ${s.ornaments * ORNAMENT_PRICE}
                   </p>
                 )}
+                {s.personalizations.some((p) => p.trim()) && (
+                  <p className="text-sm text-slate-600">
+                    Personalization: {s.personalizations.map((p) => p.trim() || '(blank)').join(', ')}
+                  </p>
+                )}
                 {s.photos > 0 && (
                   <p className="text-sm text-slate-600">
                     Photos with Santa: {s.photos} × ${PHOTO_PRICE} = ${s.photos * PHOTO_PRICE}
@@ -321,7 +377,7 @@ export default function App() {
             <p className="text-xs font-extrabold tracking-widest" style={{ color: RED }}>THIS YEAR'S ORNAMENT</p>
             <h2 className="saa-display text-2xl mt-1" style={{ color: NAVY }}>Hand-painted SAA keepsake</h2>
             <p className="text-slate-600 mt-2">
-              A ceramic ornament made just for our school, ready to hang on the tree.
+              A ceramic ornament made just for our school, ready to hang on the tree. Free personalization!
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="rounded-full px-3 py-1 text-sm font-bold text-white" style={{ background: NAVY }}>
@@ -378,7 +434,7 @@ export default function App() {
                   <div className="grid grid-cols-2 gap-3">
                     <select
                       value={s.grade}
-                      onChange={(e) => updateStudent(s.id, 'grade', e.target.value)}
+                      onChange={(e) => pickGrade(s.id, e.target.value)}
                       className={inputClass}
                     >
                       <option value="">Grade</option>
@@ -392,7 +448,15 @@ export default function App() {
                       value={s.teacher}
                       onChange={(e) => updateStudent(s.id, 'teacher', e.target.value)}
                       className={inputClass}
+                      list={`teachers-${s.id}`}
+                      autoComplete="off"
                     />
+                    {/* Suggestions only: parents can still type any name */}
+                    <datalist id={`teachers-${s.id}`}>
+                      {ALL_TEACHERS.map((t) => (
+                        <option key={t} value={t} />
+                      ))}
+                    </datalist>
                   </div>
 
                   <div className="flex items-center justify-between pt-2">
@@ -410,6 +474,26 @@ export default function App() {
                       onPlus={() => adjustCount(s.id, 'ornaments', 1)}
                     />
                   </div>
+
+                  {s.ornaments > 0 && (
+                    <div className="space-y-2 rounded-xl p-3" style={{ background: '#F3F9E8' }}>
+                      <p className="text-sm font-bold" style={{ color: NAVY }}>
+                        Personalization (free, optional)
+                      </p>
+                      {s.personalizations.map((p, idx) => (
+                        <input
+                          key={idx}
+                          type="text"
+                          placeholder={idx % 2 === 0 ? 'e.g. Vincent 2026' : 'e.g. Vincent 6th grade'}
+                          value={p}
+                          onChange={(e) => updatePersonalization(s.id, idx, e.target.value)}
+                          className={inputClass}
+                          aria-label={`Ornament ${idx + 1} personalization`}
+                        />
+                      ))}
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-11 h-11 rounded-full flex items-center justify-center text-xl" style={{ background: '#FDECEC' }}>
