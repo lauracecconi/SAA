@@ -335,9 +335,9 @@ export default function App() {
             </section>
           ) : (
             <section className="rounded-2xl p-5 mb-5 border-2" style={{ borderColor: LIME, background: '#F3F9E8' }}>
-              <h3 className="font-extrabold text-lg" style={{ color: NAVY }}>Paying with cash</h3>
+              <h3 className="font-extrabold text-lg" style={{ color: NAVY }}>Paying by check</h3>
               <p className="mt-1">
-                Please bring <strong>${total}</strong> in cash to the school office.
+                Please bring a check for <strong>${total}</strong> to the school office.
               </p>
               <p className="text-sm text-slate-600 mt-1">Reference: {students.map((s) => s.name).join(', ')}</p>
             </section>
@@ -536,7 +536,7 @@ export default function App() {
           <div className="grid grid-cols-2 gap-3">
             {[
               { key: 'venmo', title: 'Venmo', sub: `@${VENMO_HANDLE}` },
-              { key: 'cash', title: 'Cash', sub: 'School office' },
+              { key: 'check', title: 'Check', sub: 'School office' },
             ].map((opt) => {
               const on = paymentMethod === opt.key;
               return (
