@@ -500,13 +500,13 @@ export default function App() {
                         Personalization (free, optional)
                       </p>
                       <p className="text-xs text-slate-600 -mt-1">
-                        Handwritten on the back of each ornament. Up to 4 names per ornament.
+                        Handwritten on the back of each ornament.
                       </p>
                       {s.personalizations.map((p, idx) => (
                         <input
                           key={idx}
                           type="text"
-                          placeholder={idx % 2 === 0 ? 'e.g. James 6th Grade' : 'e.g. James 2026'}
+                          placeholder="e.g. James 6th Grade or James 2026"
                           value={p}
                           onChange={(e) => updatePersonalization(s.id, idx, e.target.value)}
                           className={inputClass}
