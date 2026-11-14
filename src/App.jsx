@@ -506,7 +506,7 @@ export default function App() {
                         <input
                           key={idx}
                           type="text"
-                          placeholder={idx % 2 === 0 ? 'e.g. James 6th Grade 2026' : 'e.g. The Kalisperis Family 2026'}
+                          placeholder={idx % 2 === 0 ? 'e.g. James 6th Grade' : 'e.g. James 2026'}
                           value={p}
                           onChange={(e) => updatePersonalization(s.id, idx, e.target.value)}
                           className={inputClass}
