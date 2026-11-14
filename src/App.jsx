@@ -390,10 +390,17 @@ export default function App() {
             <img src={ORNAMENT_IMAGE} alt="SAA holiday ornament" className="w-full h-64 sm:h-full object-contain p-2" />
           </button>
           <div className="sm:w-1/2 p-5 flex flex-col justify-center border-t sm:border-t-0 sm:border-l border-slate-100">
-            <p className="text-xs font-extrabold tracking-widest" style={{ color: RED }}>THIS YEAR'S ORNAMENT</p>
-            <h2 className="saa-display text-2xl mt-1" style={{ color: NAVY }}>Hand-painted SAA keepsake</h2>
+            <p className="text-xs font-extrabold tracking-widest" style={{ color: RED }}>THE 2026 ST. ALOYSIUS ORNAMENT</p>
+            <h2 className="saa-display text-2xl mt-1 leading-snug" style={{ color: NAVY }}>
+              Hand-painted. One of a kind. Made only for St. Aloysius.
+            </h2>
             <p className="text-slate-600 mt-2">
-              A ceramic ornament made just for our school, ready to hang on the tree. Free personalization!
+              Each ceramic ornament is custom designed for our school and painted by hand, so no two are exactly
+              alike. You won't find it in any store.
+            </p>
+            <p className="text-slate-600 mt-2">
+              Add your son's name or the year on the back, free, and it becomes a keepsake your family will
+              unpack and hang for Christmases to come.
             </p>
             <p className="text-sm font-bold mt-2" style={{ color: RED }}>
               Quantities are limited and may sell out, so please order soon.
