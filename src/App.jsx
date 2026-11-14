@@ -396,7 +396,7 @@ export default function App() {
             </h2>
             <p className="text-slate-600 mt-2">
               Custom designed for our school and hand-painted by an artist, made in the USA. No two are alike.
-              Add a free personalization and start a St. Aloysius tradition on your tree.
+              Add a free personalization and start or continue a St. Aloysius tradition on your tree.
             </p>
             <p className="text-sm font-bold mt-2" style={{ color: RED }}>
               Quantities are limited and may sell out, so please order soon.
