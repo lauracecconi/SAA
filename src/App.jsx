@@ -26,7 +26,8 @@ const ORNAMENT_PRICE = 25;
 const PHOTO_PRICE = 5;
 const VENMO_HANDLE = 'SAAParents';
 const CHECK_PAYABLE_TO = 'St Aloysius Academy';
-const EVENT_DATE = ''; // e.g. 'Friday, December 12' (shown on the confirmation screen when filled in)
+const EVENT_DATE = 'Wednesday, December 9';
+const VILLAGE_BANNER = '/village-banner.jpg'; // lives in the /public folder
 const CONTACT_NAME = 'Laura Cecconi';
 const CONTACT_EMAIL = 'laurateta@gmail.com';
 const ORNAMENT_IMAGE = '/ornament.jpg'; // lives in the /public folder
@@ -102,6 +103,17 @@ export default function App() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [zoom, setZoom] = useState(false);
+
+  // Simple two-page setup: the order form, and an info page at #about
+  const [page, setPage] = useState(() => (window.location.hash === '#about' ? 'about' : 'order'));
+  React.useEffect(() => {
+    const onHash = () => {
+      setPage(window.location.hash === '#about' ? 'about' : 'order');
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
 
   const updateStudent = (id, field, value) =>
     setStudents((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
@@ -278,6 +290,98 @@ export default function App() {
     </header>
   );
 
+
+  // ---------- About the Santa Shop ----------
+  const SCHEDULE = [
+    ['8:45–9:35', 'Grade 8'],
+    ['9:40–10:30', 'Kindergarten & Grade 6'],
+    ['10:35–11:25', 'Grades 2 & 5'],
+    ['12:00–12:30', 'Clockhouse'],
+    ['12:35–1:25', 'Grades 3 & 4'],
+    ['1:30–2:20', 'Grades 1 & 7'],
+    ['2:30–3:00', 'Parents & volunteers'],
+  ];
+  const InfoCard = ({ title, children }) => (
+    <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+      <h3 className="saa-display text-2xl mb-2" style={{ color: NAVY }}>{title}</h3>
+      <div className="text-slate-700 space-y-2">{children}</div>
+    </section>
+  );
+
+  if (page === 'about') {
+    return (
+      <div className="saa-body min-h-screen bg-[#FBF8F1] text-slate-800 pb-16">
+        <Styles />
+        <Header />
+        <main className="max-w-2xl mx-auto px-4">
+          <div className="-mt-6 relative rounded-2xl overflow-hidden shadow-md border border-slate-200 bg-white">
+            <img src={VILLAGE_BANNER} alt="Snowy Christmas village" className="w-full h-auto block" />
+            <div className="p-5 text-center">
+              <p className="text-xs font-extrabold tracking-widest" style={{ color: RED }}>A WILDCAT CHRISTMAS</p>
+              <h2 className="saa-display text-3xl mt-1" style={{ color: NAVY }}>{EVENT_DATE}, 2026</h2>
+              <p className="text-slate-600 mt-1">St. Aloysius Academy Small Gym</p>
+            </div>
+          </div>
+
+          <div className="space-y-4 mt-5">
+            <InfoCard title="About the Santa Shop">
+              <p>
+                The Santa Shop gives our boys a joyful chance to experience the spirit of giving: choosing
+                thoughtful gifts for the people they love, all on their own, guided by our Catholic values.
+              </p>
+              <p>
+                It's run by parent volunteers and isn't a school fundraiser. Table sales simply cover the cost of
+                the event, like Santa and decorations.
+              </p>
+            </InfoCard>
+
+            <InfoCard title="What your son can shop">
+              <p>
+                Volunteer parents curate several tables of gifts for family and friends. Most items are around
+                <strong> $5 per person</strong> your son is shopping for.
+              </p>
+              <p>A few vendors will also have tables. Vendor purchases are paid separately.</p>
+              <p>
+                <strong>Cash or check only.</strong> Send your son's shopping money in the labeled envelope.
+              </p>
+            </InfoCard>
+
+            <InfoCard title="Ornaments & Photos with Santa">
+              <p>Pre-ordered ornaments are handed out on the day of the event.</p>
+              <p>Photos with Santa are taken that day and sent home with your son after the event.</p>
+              <a
+                href="#"
+                className="inline-block mt-1 rounded-xl px-4 py-2 font-extrabold text-white"
+                style={{ background: RED }}
+              >
+                Pre-order now
+              </a>
+            </InfoCard>
+
+            <InfoCard title="Class schedule">
+              <ul className="divide-y divide-slate-100">
+                {SCHEDULE.map(([time, who]) => (
+                  <li key={time} className="flex justify-between gap-4 py-2">
+                    <span className="font-bold tabular-nums" style={{ color: NAVY }}>{time}</span>
+                    <span className="text-right">{who}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-sm text-slate-600">
+                Parents are welcome to shop with their son during his class time.
+              </p>
+            </InfoCard>
+          </div>
+
+          <a href="#" className="block text-center mt-6 font-bold underline" style={{ color: NAVY }}>
+            ← Back to the pre-order form
+          </a>
+          <Contact />
+        </main>
+      </div>
+    );
+  }
+
   // ---------- Confirmation ----------
   if (submitted) {
     return (
@@ -379,8 +483,22 @@ export default function App() {
       <Header />
 
       <main className="max-w-2xl mx-auto px-4">
+        {/* Pre-sale intro */}
+        <section className="-mt-6 relative bg-white rounded-2xl shadow-md border border-slate-200 p-5">
+          <p className="text-xs font-extrabold tracking-widest" style={{ color: RED }}>
+            PRE-SALE · {EVENT_DATE.toUpperCase()}
+          </p>
+          <p className="mt-1 text-slate-700">
+            Pre-order Santa Shop items here. <strong>Ornaments</strong> are handed out on the day of the event.{' '}
+            <strong>Photos with Santa</strong> are taken that day and sent home with your son after the event.
+          </p>
+          <a href="#about" className="inline-block mt-2 font-bold underline" style={{ color: NAVY }}>
+            About the Santa Shop →
+          </a>
+        </section>
+
         {/* Ornament showcase */}
-        <section className="-mt-6 relative bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden sm:flex">
+        <section className="mt-5 relative bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden sm:flex">
           <button
             type="button"
             onClick={() => setZoom(true)}
