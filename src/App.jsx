@@ -317,33 +317,44 @@ export default function App() {
           <div className="-mt-6 relative rounded-2xl overflow-hidden shadow-md border border-slate-200 bg-white">
             <img src={VILLAGE_BANNER} alt="Snowy Christmas village" className="w-full h-auto block" />
             <div className="p-5 text-center">
-              <p className="text-xs font-extrabold tracking-widest" style={{ color: RED }}>A WILDCAT CHRISTMAS</p>
+              <p className="text-xs font-extrabold tracking-widest" style={{ color: RED }}>GRINCHMAS — WILDCATS IN WHOVILLE</p>
               <h2 className="saa-display text-3xl mt-1" style={{ color: NAVY }}>{EVENT_DATE}, 2026</h2>
               <p className="text-slate-600 mt-1">St. Aloysius Academy Small Gym</p>
             </div>
           </div>
 
           <div className="space-y-4 mt-5">
-            <InfoCard title="About the Santa Shop">
-              <p>
-                The Santa Shop gives our boys a joyful chance to experience the spirit of giving: choosing
-                thoughtful gifts for the people they love, all on their own, guided by our Catholic values.
+            <InfoCard title="About Santa Shop">
+              <p className="font-extrabold text-lg" style={{ color: RED }}>
+                A Little Shopping, A Lot of Christmas Spirit!
               </p>
               <p>
-                It's run by parent volunteers and isn't a school fundraiser. Table sales simply cover the cost of
-                the event, like Santa and decorations.
+                Our annual St. Aloysius Academy Santa Shop is a beloved tradition where our Wildcats experience the
+                joy of giving by shopping for family, friends, teachers, and even their pets!
+              </p>
+              <p>
+                This year's <strong>Grinchmas — Wildcats in Whoville</strong> will feature a wonderful selection of
+                affordable gifts from our parent-run tables and participating vendors, including Sew Adorable and our
+                returning sportswear vendor.
               </p>
             </InfoCard>
 
-            <InfoCard title="What your son can shop">
-              <p>
-                Volunteer parents curate several tables of gifts for family and friends. Most items are around
-                <strong> $5 per person</strong> your son is shopping for.
-              </p>
-              <p>A few vendors will also have tables. Vendor purchases are paid separately.</p>
-              <p>
-                <strong>Cash or check only.</strong> Send your son's shopping money in the labeled envelope.
-              </p>
+            <InfoCard title="What Parents Need to Know">
+              <ul className="space-y-3">
+                {[
+                  ['Shopping Money', 'Send cash or a check with your son. We recommend budgeting approximately $5–$10 per gift, depending on how many people he plans to shop for.'],
+                  ['Shopping Bag', 'Please send a reusable bag for your son to carry his gifts home. A personalized name tag will be provided.'],
+                  ['Gift Wrapping', 'Our volunteers will help wrap purchases so gifts are ready to surprise loved ones!'],
+                  ['Charitable Giving', 'Families will also have an opportunity to support a holiday charity collection. Details will be shared soon.'],
+                ].map(([label, text]) => (
+                  <li key={label} className="flex gap-3">
+                    <Paw className="w-5 h-5 shrink-0 mt-0.5" style={{ color: LIME }} />
+                    <span>
+                      <strong style={{ color: NAVY }}>{label}:</strong> {text}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </InfoCard>
 
             <InfoCard title="Ornaments & Photos with Santa">
@@ -371,6 +382,13 @@ export default function App() {
                 Parents are welcome to shop with their son during his class time.
               </p>
             </InfoCard>
+          </div>
+
+          <div className="text-center mt-6 space-y-2 text-slate-700">
+            <p>More information and shopping instructions will be sent home with your sons as we get closer to Santa Shop!</p>
+            <p className="saa-display text-xl" style={{ color: NAVY }}>
+              Thank you for helping us make this special Christmas tradition possible!
+            </p>
           </div>
 
           <a href="#" className="block text-center mt-6 font-bold underline" style={{ color: NAVY }}>
