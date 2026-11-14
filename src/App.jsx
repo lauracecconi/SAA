@@ -395,12 +395,8 @@ export default function App() {
               Hand-painted. One of a kind. Made only for St. Aloysius.
             </h2>
             <p className="text-slate-600 mt-2">
-              Each ceramic ornament is custom designed for our school and painted by hand, so no two are exactly
-              alike. You won't find it in any store.
-            </p>
-            <p className="text-slate-600 mt-2">
-              Add your son's name or the year on the back, free, and it becomes a keepsake your family will
-              unpack and hang for Christmases to come.
+              Custom designed for our school and hand-painted by an artist, made in the USA. No two are alike.
+              Add a free personalization and start a St. Aloysius tradition on your tree.
             </p>
             <p className="text-sm font-bold mt-2" style={{ color: RED }}>
               Quantities are limited and may sell out, so please order soon.
