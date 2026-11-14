@@ -25,6 +25,10 @@ const ALL_TEACHERS = Object.values(TEACHERS_BY_GRADE);
 const ORNAMENT_PRICE = 25;
 const PHOTO_PRICE = 5;
 const VENMO_HANDLE = 'SAAParents';
+const CHECK_PAYABLE_TO = 'St Aloysius Academy';
+const EVENT_DATE = ''; // e.g. 'Friday, December 12' (shown on the confirmation screen when filled in)
+const CONTACT_NAME = 'Laura Cecconi';
+const CONTACT_EMAIL = 'laurateta@gmail.com';
 const ORNAMENT_IMAGE = '/ornament.jpg'; // lives in the /public folder
 
 // Google Form submission endpoint (unchanged from your live setup)
@@ -142,7 +146,7 @@ export default function App() {
   const total = students.reduce((sum, s) => sum + studentTotal(s), 0);
   const itemCount = students.reduce((n, s) => n + s.ornaments + s.photos, 0);
 
-  const note = `Holiday Fundraiser - ${students
+  const note = `SAA Santa Shop ornament order - ${students
     .map((s) => {
       const parts = [];
       if (s.ornaments > 0) parts.push(`${s.ornaments} ornament${s.ornaments > 1 ? 's' : ''}`);
@@ -247,6 +251,15 @@ export default function App() {
     `}</style>
   );
 
+  const Contact = () => (
+    <p className="text-center text-sm text-slate-500 mt-8">
+      Questions? Contact {CONTACT_NAME} at{' '}
+      <a href={`mailto:${CONTACT_EMAIL}`} className="font-bold underline" style={{ color: NAVY }}>
+        {CONTACT_EMAIL}
+      </a>
+    </p>
+  );
+
   const Header = () => (
     <header className="relative overflow-hidden text-white" style={{ background: NAVY }}>
       <Paw className="absolute -right-6 -top-4 w-40 h-40 opacity-10 rotate-12" />
@@ -258,7 +271,7 @@ export default function App() {
         >
           <Paw className="w-4 h-4" /> SAA
         </div>
-        <h1 className="saa-display text-4xl sm:text-5xl mt-4 leading-tight">Holiday Fundraiser</h1>
+        <h1 className="saa-display text-4xl sm:text-5xl mt-4 leading-tight">St. Aloysius Santa Shop</h1>
         <p className="mt-2 text-white/85 text-lg">Ornaments &amp; Photos with Santa</p>
       </div>
       <div className="saa-stripe h-3" />
@@ -337,8 +350,10 @@ export default function App() {
             <section className="rounded-2xl p-5 mb-5 border-2" style={{ borderColor: LIME, background: '#F3F9E8' }}>
               <h3 className="font-extrabold text-lg" style={{ color: NAVY }}>Paying with cash or check</h3>
               <p className="mt-1">
-                Please bring <strong>${total}</strong> in cash or a check with you on the day of the event.
+                Please bring <strong>${total}</strong> in cash or a check on the day of the Santa Shop
+                {EVENT_DATE ? ` (${EVENT_DATE})` : ''}. You can include it with your son's Santa Shop spending money.
               </p>
+              <p className="text-sm text-slate-600 mt-1">Checks payable to {CHECK_PAYABLE_TO}.</p>
               <p className="text-sm text-slate-600 mt-1">Reference: {students.map((s) => s.name).join(', ')}</p>
             </section>
           )}
@@ -351,6 +366,7 @@ export default function App() {
           >
             Place another order
           </button>
+          <Contact />
         </main>
       </div>
     );
@@ -378,6 +394,9 @@ export default function App() {
             <h2 className="saa-display text-2xl mt-1" style={{ color: NAVY }}>Hand-painted SAA keepsake</h2>
             <p className="text-slate-600 mt-2">
               A ceramic ornament made just for our school, ready to hang on the tree. Free personalization!
+            </p>
+            <p className="text-sm font-bold mt-2" style={{ color: RED }}>
+              Quantities are limited and may sell out, so please order soon.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="rounded-full px-3 py-1 text-sm font-bold text-white" style={{ background: NAVY }}>
@@ -480,11 +499,14 @@ export default function App() {
                       <p className="text-sm font-bold" style={{ color: NAVY }}>
                         Personalization (free, optional)
                       </p>
+                      <p className="text-xs text-slate-600 -mt-1">
+                        Handwritten on the back of each ornament. Up to 4 names per ornament.
+                      </p>
                       {s.personalizations.map((p, idx) => (
                         <input
                           key={idx}
                           type="text"
-                          placeholder={idx % 2 === 0 ? 'e.g. Vincent 2026' : 'e.g. Vincent 6th grade'}
+                          placeholder={idx % 2 === 0 ? 'e.g. James 6th Grade 2026' : 'e.g. The Kalisperis Family 2026'}
                           value={p}
                           onChange={(e) => updatePersonalization(s.id, idx, e.target.value)}
                           className={inputClass}
@@ -536,7 +558,7 @@ export default function App() {
           <div className="grid grid-cols-2 gap-3">
             {[
               { key: 'venmo', title: 'Venmo', sub: `@${VENMO_HANDLE}` },
-              { key: 'cash or check', title: 'Cash or check', sub: 'Pay at the event' },
+              { key: 'cash or check', title: 'Cash or check', sub: 'Pay at the Santa Shop' },
             ].map((opt) => {
               const on = paymentMethod === opt.key;
               return (
@@ -565,6 +587,7 @@ export default function App() {
             {error}
           </p>
         )}
+        <Contact />
       </main>
 
       {/* Sticky total + submit */}
