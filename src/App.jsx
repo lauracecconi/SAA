@@ -28,6 +28,7 @@ const VENMO_HANDLE = 'SAAParents';
 const CHECK_PAYABLE_TO = 'St Aloysius Academy';
 const EVENT_DATE = 'Wednesday, December 9';
 const VILLAGE_BANNER = '/village-banner.jpg'; // lives in the /public folder
+const VOLUNTEER_URL = 'https://www.signupgenius.com/go/60B0F4DA4A72FA0F49-67650559-2026';
 const CONTACT_NAME = 'Laura Cecconi';
 const CONTACT_EMAIL = 'laurateta@gmail.com';
 const ORNAMENT_IMAGE = '/ornament.jpg'; // lives in the /public folder
@@ -381,6 +382,23 @@ export default function App() {
               <p className="text-sm text-slate-600">
                 Parents are welcome to shop with their son during his class time.
               </p>
+            </InfoCard>
+
+            <InfoCard title="Volunteer with Us">
+              <p>
+                Santa Shop is only possible because of our amazing parent volunteers! We'd love your help, whether
+                it's helping our Wildcats shop, wrapping gifts, or lending a hand with setup and cleanup.
+              </p>
+              <p>Grab a spot early. Every volunteer makes the day merrier!</p>
+              <a
+                href={VOLUNTEER_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-1 rounded-xl px-4 py-2 font-extrabold"
+                style={{ background: LIME, color: NAVY }}
+              >
+                Sign up to volunteer →
+              </a>
             </InfoCard>
           </div>
 
