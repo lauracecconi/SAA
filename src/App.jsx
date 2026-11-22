@@ -325,6 +325,23 @@ export default function App() {
           </div>
 
           <div className="space-y-4 mt-5">
+            <InfoCard title="Volunteer with Us">
+              <p>
+                Santa Shop is only possible because of our amazing parent volunteers! We'd love your help, whether
+                it's helping our Wildcats shop, wrapping gifts, or lending a hand with setup and cleanup.
+              </p>
+              <p>Grab a spot early. Every volunteer makes the day merrier!</p>
+              <a
+                href={VOLUNTEER_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-1 rounded-xl px-4 py-2 font-extrabold"
+                style={{ background: LIME, color: NAVY }}
+              >
+                Sign up to volunteer →
+              </a>
+            </InfoCard>
+
             <InfoCard title="About Santa Shop">
               <p className="font-extrabold text-lg" style={{ color: RED }}>
                 A Little Shopping, A Lot of Christmas Spirit!
@@ -382,23 +399,6 @@ export default function App() {
               <p className="text-sm text-slate-600">
                 Parents are welcome to shop with their son during his class time.
               </p>
-            </InfoCard>
-
-            <InfoCard title="Volunteer with Us">
-              <p>
-                Santa Shop is only possible because of our amazing parent volunteers! We'd love your help, whether
-                it's helping our Wildcats shop, wrapping gifts, or lending a hand with setup and cleanup.
-              </p>
-              <p>Grab a spot early. Every volunteer makes the day merrier!</p>
-              <a
-                href={VOLUNTEER_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block mt-1 rounded-xl px-4 py-2 font-extrabold"
-                style={{ background: LIME, color: NAVY }}
-              >
-                Sign up to volunteer →
-              </a>
             </InfoCard>
           </div>
 
