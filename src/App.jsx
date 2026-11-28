@@ -367,6 +367,10 @@ export default function App() {
               <div className="bg-white p-5 border-t border-slate-200 text-slate-700 space-y-2">
                 <h3 className="saa-display text-2xl" style={{ color: NAVY }}>Blue vs. White Challenge</h3>
                 <p>
+                  Every Wildcat is assigned to Blue or White in his first year at SAA, and the two teams compete all
+                  year long. This time, the competition is all about giving!
+                </p>
+                <p>
                   Every donation counts toward your son's team. Which side will bring the most Christmas cheer to
                   St. Edmond's? Go Wildcats!
                 </p>
