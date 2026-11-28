@@ -32,6 +32,7 @@ const VOLUNTEER_URL = 'https://www.signupgenius.com/go/60B0F4DA4A72FA0F49-676505
 const CONTACT_NAME = 'Laura Cecconi';
 const CONTACT_EMAIL = 'laurateta@gmail.com';
 const ORNAMENT_IMAGE = '/ornament.jpg'; // lives in the /public folder
+const WISH_LIST_URL = 'https://www.amazon.com/registries/gl/guest-view/20QSS39CGSTGI';
 
 // Google Form submission endpoint (unchanged from your live setup)
 const FORM_URL =
@@ -105,11 +106,13 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [zoom, setZoom] = useState(false);
 
-  // Simple two-page setup: the order form, and an info page at #about
-  const [page, setPage] = useState(() => (window.location.hash === '#about' ? 'about' : 'order'));
+  // Simple hash pages: the order form, an info page at #about, and the charity page at #giving
+  const pageFromHash = () =>
+    window.location.hash === '#about' ? 'about' : window.location.hash === '#giving' ? 'giving' : 'order';
+  const [page, setPage] = useState(pageFromHash);
   React.useEffect(() => {
     const onHash = () => {
-      setPage(window.location.hash === '#about' ? 'about' : 'order');
+      setPage(pageFromHash());
       window.scrollTo(0, 0);
     };
     window.addEventListener('hashchange', onHash);
@@ -309,6 +312,114 @@ export default function App() {
     </section>
   );
 
+  if (page === 'giving') {
+    return (
+      <div className="saa-body min-h-screen bg-[#FBF8F1] text-slate-800 pb-16">
+        <Styles />
+        <Header />
+        <main className="max-w-2xl mx-auto px-4">
+          <div className="-mt-6 relative rounded-2xl shadow-md border border-slate-200 bg-white p-5 text-center">
+            <p className="text-xs font-extrabold tracking-widest" style={{ color: RED }}>SANTA SHOP CHARITY DRIVE</p>
+            <h2 className="saa-display text-3xl mt-1" style={{ color: NAVY }}>Giving to St. Edmond's Home for Children</h2>
+            <p className="text-slate-600 mt-2">
+              The best part of Christmas is the giving. This year our Wildcats will share that joy with the children
+              of St. Edmond's Home in Bryn Mawr.
+            </p>
+          </div>
+
+          <div className="space-y-4 mt-5">
+            <InfoCard title="About St. Edmond's">
+              <p>
+                St. Edmond's Home for Children was founded in 1916 by Archbishop Edmond Prendergast to care for
+                children with polio. Over 100 years later, it is a residential home, run through Catholic Charities of
+                the Archdiocese of Philadelphia, for children and young adults with severe intellectual and physical
+                disabilities.
+              </p>
+              <p>
+                Its staff provide round-the-clock care, education, and therapy, giving each child a loving place to
+                call home. A little Christmas from our Wildcats goes a long way there.
+              </p>
+            </InfoCard>
+
+            <InfoCard title="Helping Our Boys Find the Giving Spirit">
+              <p>
+                Santa Shop is all about our boys learning the joy of giving, and this collection takes it one step
+                further: a gift for a child they may never meet.
+              </p>
+              <p className="font-extrabold" style={{ color: RED }}>
+                Please involve your son in picking out the donation!
+              </p>
+              <p>
+                Let him browse the wish list, choose a gift, and talk with you about who will receive it. That moment
+                of choosing is what we hope he'll remember.
+              </p>
+            </InfoCard>
+
+            <section className="rounded-2xl overflow-hidden shadow-sm border border-slate-200">
+              <div className="grid grid-cols-2 text-center">
+                <div className="p-5 text-white" style={{ background: NAVY }}>
+                  <p className="saa-display text-3xl">Blue</p>
+                </div>
+                <div className="p-5 bg-white" style={{ color: NAVY }}>
+                  <p className="saa-display text-3xl">White</p>
+                </div>
+              </div>
+              <div className="bg-white p-5 border-t border-slate-200 text-slate-700 space-y-2">
+                <h3 className="saa-display text-2xl" style={{ color: NAVY }}>Blue vs. White Challenge</h3>
+                <p>
+                  Every Wildcat is assigned to Blue or White in his first year at SAA, and the two teams compete all
+                  year long. This time, the competition is all about giving!
+                </p>
+                <p>
+                  Every donation counts toward your son's team. Which side will bring the most Christmas cheer to
+                  St. Edmond's? Go Wildcats!
+                </p>
+              </div>
+            </section>
+
+            <InfoCard title="Two Ways to Give">
+              <ul className="space-y-3">
+                <li className="flex gap-3">
+                  <Paw className="w-5 h-5 shrink-0 mt-0.5" style={{ color: LIME }} />
+                  <span>
+                    <strong style={{ color: NAVY }}>Drop off on Santa Shop day:</strong> send your son's donation in
+                    with him on {EVENT_DATE}.
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <Paw className="w-5 h-5 shrink-0 mt-0.5" style={{ color: LIME }} />
+                  <span>
+                    <strong style={{ color: NAVY }}>Shop from home:</strong> sit down with your son and choose a gift
+                    together from our Amazon wish list.
+                  </span>
+                </li>
+              </ul>
+              <a
+                href={WISH_LIST_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-2 rounded-xl px-4 py-2 font-extrabold"
+                style={{ background: LIME, color: NAVY }}
+              >
+                Open the Amazon wish list →
+              </a>
+            </InfoCard>
+          </div>
+
+          <p className="saa-display text-xl text-center mt-6" style={{ color: NAVY }}>
+            Thank you for helping our Wildcats share the true spirit of Christmas!
+          </p>
+
+          <div className="text-center mt-6 space-x-4">
+            <a href="#about" className="font-bold underline" style={{ color: NAVY }}>About the Santa Shop</a>
+            <a href="#" className="font-bold underline" style={{ color: NAVY }}>Pre-order form</a>
+          </div>
+          <Contact />
+        </main>
+      </div>
+    );
+  }
+
   if (page === 'about') {
     return (
       <div className="saa-body min-h-screen bg-[#FBF8F1] text-slate-800 pb-16">
@@ -363,7 +474,7 @@ export default function App() {
                   ['Shopping Money', 'Send cash or a check with your son. We recommend budgeting approximately $5–$10 per gift, depending on how many people he plans to shop for.'],
                   ['Shopping Bag', 'Please send a reusable bag for your son to carry his gifts home. A personalized name tag will be provided.'],
                   ['Gift Wrapping', 'Our volunteers will help wrap purchases so gifts are ready to surprise loved ones!'],
-                  ['Charitable Giving', 'Families will also have an opportunity to support a holiday charity collection. Details will be shared soon.'],
+                  ['Charitable Giving', <>This year we're collecting gifts for St. Edmond's Home for Children in Bryn Mawr, a Blue vs. White challenge! <a href="#giving" className="font-bold underline" style={{ color: NAVY }}>See how to give →</a></>],
                 ].map(([label, text]) => (
                   <li key={label} className="flex gap-3">
                     <Paw className="w-5 h-5 shrink-0 mt-0.5" style={{ color: LIME }} />
@@ -530,6 +641,9 @@ export default function App() {
           </p>
           <a href="#about" className="inline-block mt-2 font-bold underline" style={{ color: NAVY }}>
             About the Santa Shop →
+          </a>{' '}
+          <a href="#giving" className="inline-block mt-2 ml-4 font-bold underline" style={{ color: RED }}>
+            Charity drive for St. Edmond's →
           </a>
         </section>
 
